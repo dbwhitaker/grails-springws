@@ -31,7 +31,7 @@ import org.springframework.ws.soap.SoapHeaderElement
  *
  */
 public class EndpointInterceptorAdapter implements SoapEndpointInterceptor {
-	
+
     def interceptorConfig
     def configClass
 
@@ -126,4 +126,25 @@ public class EndpointInterceptorAdapter implements SoapEndpointInterceptor {
     String toString() {
         return "EndpointInterceptorAdapter[$interceptorConfig, $configClass]"
     }
+
+
+    /**
+     * Callback after completion of request and response (fault) processing. Will be called on any outcome of endpoint
+     * invocation, thus allows for proper resource cleanup.
+     * <p/>
+     * Note: Will only be called if this interceptor's {@link #handleRequest}  method has successfully completed.
+     * <p/>
+     * As with the {@link #handleResponse} method, the method will be invoked on each interceptor in the chain in
+     * reverse order, so the first interceptor will be the last to be invoked.
+     *
+     * @param messageContext contains both request and response messages, the response should contains a Fault
+     * @param endpoint       chosen endpoint to invoke
+     * @param ex exception thrown on handler execution, if any
+     * @throws Exception in case of errors
+     * @since 2.0.2
+     */
+    void afterCompletion(MessageContext messageContext, Object endpoint, Exception ex) throws Exception {
+        log.debug("afterCompletion: enter...")
+    }
+
 }

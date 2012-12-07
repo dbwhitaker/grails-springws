@@ -50,10 +50,10 @@ import org.springframework.ws.soap.server.endpoint.SimpleSoapExceptionResolver
 class SpringwsGrailsPlugin {
 
     // the plugin version
-    def version = "0.5.0"
+    def version = "0.6.0"
 
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "1.1 > *"
+    def grailsVersion = "2.0 > *"
 
     // the other plugins this plugin depends on
     // This dependency would be useful, but should be scoped to
@@ -78,7 +78,7 @@ class SpringwsGrailsPlugin {
     def title = "Spring WS Plugin"
 
     def description = '''\
-Spring Web Services plugin allows your Grails application to provide and consume contract-driven web services. Feature highlights include: 
+Spring Web Services plugin allows your Grails application to provide and consume contract-driven web services. Feature highlights include:
 * New in 0.5.0: Added support for Web Services Security (WS-Security)
 * New in 0.2.3: Bug fix release (see http://jira.codehaus.org/browse/GRAILSPLUGINS-1225)
 * New in 0.2.2: Added configuration option to override default Endpoint-name-based strategy for mapping incoming XML payloads to endpoints
@@ -101,11 +101,11 @@ Spring Web Services plugin allows your Grails application to provide and consume
                             "file:./grails-app/conf/*WsSecurityConfig.groovy"]
 
     def loadAfter = ['acegi']
-    
+
     def log = LogFactory.getLog(SpringwsGrailsPlugin)
-    
+
     static final DEFAULT_WS_SECURITY_CONFIG_NAME = 'WsSecurityConfig'
-    
+
     static final ENDPOINT_BEANS = { endpoint ->
         "${endpoint.fullName}"(endpoint.clazz) { bean ->
             bean.singleton = true
@@ -142,7 +142,7 @@ Spring Web Services plugin allows your Grails application to provide and consume
 
             def wsdlConfig= application.config.springws?.wsdl?."$name"
             if(wsdlConfig){
-                log.debug("exporting wsdl for $name")
+                log.warn("exporting wsdl for $name")
                 "${wsdlConfig.wsdlName ?: name}"(DefaultWsdl11Definition){
                     schemaCollection = {CommonsXsdSchemaCollection s->
                         xsds= (wsdlConfig.xsds)? wsdlConfig.xsds.split(',') : "/WEB-INF/${name}.xsd"
@@ -181,7 +181,7 @@ Spring Web Services plugin allows your Grails application to provide and consume
             }
             wsSecurityObjectDefinitionSource(WebServiceInvocationDefinitionSource) {}
         }
-        
+
         // Add each of the interceptors
         for(interceptorsClass in application.getArtefacts(InterceptorsConfigArtefactHandler.TYPE)) {
             def callable = INTERCEPTOR_BEANS.curry(interceptorsClass)
@@ -208,7 +208,7 @@ Spring Web Services plugin allows your Grails application to provide and consume
 
     def onChange = { event ->
         if (log.debugEnabled) log.debug("onChange: ${event}")
-    
+
         if(event.source.toString().endsWith('Endpoint')) {
             def newEndpoint = event.application.addArtefact(EndpointArtefactHandler.TYPE, event.source)
             beans(ENDPOINT_BEANS.curry(newEndpoint)).registerBeans(event.ctx)
@@ -222,7 +222,7 @@ Spring Web Services plugin allows your Grails application to provide and consume
 
         reload(event.application, event.ctx)
     }
-    
+
     private reload(GrailsApplication application, applicationContext) {
         log.info("reloadEndpoints")
         def defaultMappings = [:]
@@ -239,6 +239,8 @@ Spring Web Services plugin allows your Grails application to provide and consume
         }
 
         if (log.debugEnabled) log.debug("resulting mappings: ${defaultMappings}")
+        log.error("TMP resulting mappings: ${defaultMappings}")
+
         applicationContext.getBean('payloadRootQNameEndpointMapping').registerEndpoints(defaultMappings)
 
         log.info("reloadInterceptors")
@@ -281,7 +283,7 @@ Spring Web Services plugin allows your Grails application to provide and consume
 
                     //TODO add checks on the type of configured authorization
                     objectDefinitionSource.urlMatcher = applicationContext.filterInvocationInterceptor.objectDefinitionSource.urlMatcher
-        
+
                     // copy urls that start with /services/ to our objectDefinitionSource
                     if (!acegiConfig.useRequestMapDomainClass && acegiConfig.requestMapString) {
                         log.debug 'Using requestMapString for authorization.'
@@ -324,7 +326,7 @@ Spring Web Services plugin allows your Grails application to provide and consume
         def foundDefaultWsSecurityConfig = applicationContext."$DEFAULT_WS_SECURITY_CONFIG_NAME" && application.isArtefactOfType(DEFAULT_WS_SECURITY_CONFIG_NAME, 'WsSecurityConfig')
         log.debug "Found default WS-Security config: $foundDefaultWsSecurityConfig"
         for(wsSecurityConfigClass in application.wsSecurityConfigClasses) {
-            log.debug "Processing ${wsSecurityConfigClass.dump()}" 
+            log.debug "Processing ${wsSecurityConfigClass.dump()}"
             def config = applicationContext."${wsSecurityConfigClass.fullName}"
             log.debug "Creating WS-Security interceptor for ${config.class.name}. Default: ${config.class.name == DEFAULT_WS_SECURITY_CONFIG_NAME}"
             def params = [securityConfigClass: config]
@@ -336,7 +338,7 @@ Spring Web Services plugin allows your Grails application to provide and consume
                 params['accessDecisionManager'] = accessDecisionManager
                 params['objectDefinitionSource'] = objectDefinitionSource
             }
-          
+
             def securityInterceptor = WsSecurityConfigFactory.createInterceptor(params)
             log.debug "Created WS-Security interceptor: ${securityInterceptor.dump()}"
             // detect referent endpoints
@@ -353,7 +355,7 @@ Spring Web Services plugin allows your Grails application to provide and consume
                             }
                             // if this is the default config, use it
                             if (config.class.name == DEFAULT_WS_SECURITY_CONFIG_NAME) {
-                                referents << endpointName                                
+                                referents << endpointName
                             }
                         }
                     }
@@ -384,7 +386,7 @@ Spring Web Services plugin allows your Grails application to provide and consume
         if (log.debugEnabled) log.debug("resulting interceptors: ${interceptors}")
         applicationContext.getBean('payloadRootQNameEndpointMapping').interceptors = interceptors
     }
-    
+
     def doWithWebDescriptor = { xml ->
         // servlets
         def servlets = xml.servlet

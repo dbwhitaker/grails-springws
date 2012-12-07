@@ -1,0 +1,6 @@
+.svn
+target
+stacktrace.log
+out
+web-app/WEB-INF
+test/reports
